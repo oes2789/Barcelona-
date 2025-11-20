@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcelona Universe - Interactive Experience</title>
+    <style>
+        :root {
+            --barca-blue: #004D98;
+            --barca-red: #C1002A;
+            --barca-gold: #EDBB00;
+            --blur-amount: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #001a33;
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated gradient background waves */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #001a33 0%, #003d7a 25%, #C1002A 50%, #004D98 75%, #001a33 100%);
+            background-size: 400% 400%;
+            animation: gradientWave 15s ease infinite;
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        @keyframes gradientWave {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Barcelona pattern overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(90deg, rgba(0, 77, 152, 0.03) 0px, rgba(0, 77, 152, 0.03) 2px, transparent 2px, transparent 40px),
+                repeating-linear-gradient(0deg, rgba(193, 0, 42, 0.03) 0px, rgba(193, 0, 42, 0.03) 2px, transparent 2px, transparent 40px);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Radial glow effects */
+        .radial-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glow-1 {
+            top: 10%;
+            left: 10%;
+            background: radial-gradient(circle, rgba(237, 187, 0, 0.15) 0%, transparent 70%);
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+
+        .glow-2 {
+            bottom: 10%;
+            right: 10%;
+            background: radial-gradient(circle, rgba(193, 0, 42, 0.12) 0%, transparent 70%);
+            animation: pulseGlow 10s ease-in-out infinite 2s;
+        }
+
+        .glow-3 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(0, 77, 152, 0.1) 0%, transparent 70%);
+            animation: pulseGlow 12s ease-in-out infinite 4s;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .particle-gold {
+            width: 4px;
+            height: 4px;
+            background: rgba(237, 187, 0, 0.8);
+            box-shadow: 0 0 10px rgba(237, 187, 0, 0.6);
+            animation: floatGold 20s infinite;
+        }
+
+        .particle-blue {
+            width: 3px;
+            height: 3px;
+            background: rgba(0, 77, 152, 0.7);
+            box-shadow: 0 0 8px rgba(0, 77, 152, 0.5);
+            animation: floatBlue 25s infinite;
+        }
+
+        .particle-red {
+            width: 2px;
+            height: 2px;
+            background: rgba(193, 0, 42, 0.8);
+            box-shadow: 0 0 6px rgba(193, 0, 42, 0.6);
+            animation: floatRed 18s infinite;
+        }
+
+        .particle-star {
+            width: 6px;
+            height: 6px;
+            background: transparent;
+            animation: floatStar 30s infinite;
+        }
+
+        .particle-star::before {
+            content: '⭐';
+            font-size: 10px;
+            position: absolute;
+            top: -3px;
+            left: -3px;
+        }
+
+        @keyframes floatGold {
+            0%, 100% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-20vh) translateX(100px) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes floatBlue {
+            0%, 100% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-20vh) translateX(-80px) rotate(-360deg); opacity: 0; }
+        }
+
+        @keyframes floatRed {
+            0%, 100% { transform: translateY(100vh) translateX(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            50% { transform: translateY(50vh) translateX(60px) scale(1.5); }
+            90% { opacity: 1; }
+            100% { transform: translateY(-20vh) translateX(120px) scale(1); opacity: 0; }
+        }
+
+        @keyframes floatStar {
+            0%, 100% { transform: translateY(100vh) translateX(0) scale(0.5); opacity: 0; }
+            10% { opacity: 1; }
+            50% { transform: translateY(50vh) translateX(-50px) scale(1.2); }
+            90% { opacity: 1; }
+            100% { transform: translateY(-20vh) translateX(-100px) scale(0.8); opacity: 0; }
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 2;
+            padding: 40px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header h1 {
+            font-size: 4em;
+            background: linear-gradient(45deg, var(--barca-blue), var(--barca-red), var(--barca-gold), var(--barca-blue));
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-weight: bold;
+            animation: shimmerText 6s ease infinite;
+            position: relative;
+            text-shadow: none;
+            filter: drop-shadow(0 0 30px rgba(237, 187, 0, 0.5));
+        }
+
+        @keyframes shimmerText {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .header h1::before {
+            content: '⚽ FC BARCELONA UNIVERSE ⚽';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, var(--barca-gold), transparent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulseGlowText 3s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes pulseGlowText {
+            0%, 100% { opacity: 0; filter: blur(10px); }
+            50% { opacity: 0.5; filter: blur(5px); }
+        }
+
+        .header p {
+            font-size: 1.3em;
+            color: var(--barca-gold);
+            opacity: 0.9;
+            animation: fadeInGlow 2s ease-in-out infinite alternate;
+            text-shadow: 0 0 20px rgba(237, 187, 0, 0.6);
+        }
+
+        @keyframes fadeInGlow {
+            from { opacity: 0.7; text-shadow: 0 0 10px rgba(237, 187, 0, 0.4); }
+            to { opacity: 1; text-shadow: 0 0 25px rgba(237, 187, 0, 0.8); }
+        }
+
+        /* Animated Barcelona stripes behind header */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 120%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(0, 77, 152, 0.1) 0px,
+                rgba(0, 77, 152, 0.1) 10px,
+                rgba(193, 0, 42, 0.1) 10px,
+                rgba(193, 0, 42, 0.1) 20px
+            );
+            animation: slideStripes 20s linear infinite;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        @keyframes slideStripes {
+            0% { transform: translateX(-50px); }
+            100% { transform: translateX(0); }
+        }
+
+        .islands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .island {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            animation: floatIsland 6s ease-in-out infinite;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        /* Animated border gradient */
+        .island::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--barca-blue), var(--barca-red), var(--barca-gold), var(--barca-blue));
+            background-size: 300% 300%;
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0;
+            animation: rotateBorder 6s linear infinite;
+            transition: opacity 0.4s;
+        }
+
+        @keyframes rotateBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .island:nth-child(1) { animation-delay: 0s; }
+        .island:nth-child(2) { animation-delay: 1.2s; }
+        .island:nth-child(3) { animation-delay: 2.4s; }
+        .island:nth-child(4) { animation-delay: 3.6s; }
+        .island:nth-child(5) { animation-delay: 4.8s; }
+
+        @keyframes floatIsland {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .island::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                repeating-linear-gradient(135deg, rgba(0, 77, 152, 0.06) 0px, rgba(0, 77, 152, 0.06) 10px, rgba(193, 0, 42, 0.05) 10px, rgba(193, 0, 42, 0.05) 20px),
+                radial-gradient(circle, rgba(237, 187, 0, 0.10) 0%, transparent 70%);
+            opacity: 0.8;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .island:hover {
+            transform: translateY(-15px) scale(1.08) rotateX(5deg);
+            border-color: transparent;
+            box-shadow: 
+                0 25px 50px rgba(237, 187, 0, 0.4),
+                0 0 60px rgba(0, 77, 152, 0.3),
+                inset 0 0 30px rgba(237, 187, 0, 0.1);
+        }
+
+        .island:hover::after {
+            opacity: 1;
+        }
+
+        .island:hover::before {
+            opacity: 1;
+        }
+
+        .island-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(237, 187, 0, 0.5));
+            animation: iconGlow 3s ease-in-out infinite;
+            transition: all 0.4s;
+        }
+
+        @keyframes iconGlow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(237, 187, 0, 0.5)); }
+            50% { filter: drop-shadow(0 0 25px rgba(237, 187, 0, 1)) drop-shadow(0 0 40px rgba(0, 77, 152, 0.6)); }
+        }
+
+        .island:hover .island-icon {
+            transform: scale(1.2) rotateY(360deg);
+            filter: drop-shadow(0 0 30px rgba(237, 187, 0, 1)) drop-shadow(0 0 50px rgba(193, 0, 42, 0.8));
+        }
+
+        .island h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: var(--barca-gold);
+        }
+
+        .island p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        .panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(var(--blur-amount));
+            z-index: 1000;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        /* Rotating golden rings around open panel */
+        .panel.active::before {
+            content: '';
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 650px;
+            height: 650px;
+            border-radius: 50%;
+            border: 6px solid transparent;
+            border-top: 6px solid var(--barca-gold);
+            border-bottom: 6px solid var(--barca-blue);
+            border-left: 6px solid var(--barca-red);
+            border-right: 6px solid var(--barca-gold);
+            z-index: 1100;
+            opacity: 0.16;
+            pointer-events: none;
+            animation: ring-spin 7s linear infinite;
+        }
+        @keyframes ring-spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(1turn); }
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .panel-content {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            position: relative;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(193, 0, 42, 0.8);
+            border: 2px solid var(--barca-red);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: var(--barca-red);
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .panel-header h2 {
+            font-size: 3em;
+            color: var(--barca-gold);
+            margin-bottom: 10px;
+        }
+
+        .trophies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .trophy-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(237, 187, 0, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .trophy-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--barca-gold);
+            box-shadow: 0 15px 30px rgba(237, 187, 0, 0.4);
+        }
+
+        .trophy-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            display: block;
+            filter: drop-shadow(0 0 15px rgba(237, 187, 0, 0.6));
+        }
+
+        .trophy-card h3 {
+            font-size: 1.4em;
+            color: var(--barca-gold);
+            margin-bottom: 10px;
+        }
+
+        .trophy-count {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+            margin: 10px 0;
+        }
+
+        .players-section {
+            margin-bottom: 40px;
+        }
+
+        .players-section h3 {
+            font-size: 1.8em;
+            color: var(--barca-gold);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(237, 187, 0, 0.3);
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: playerFloat 4s ease-in-out infinite;
+        }
+
+        .player-card:nth-child(odd) { animation-delay: 0s; }
+        .player-card:nth-child(even) { animation-delay: 2s; }
+
+        @keyframes playerFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .player-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: var(--barca-gold);
+            box-shadow: 0 10px 25px rgba(237, 187, 0, 0.3);
+        }
+
+        .manager-card {
+            border: 3px solid var(--barca-gold) !important;
+            background: rgba(237, 187, 0, 0.15) !important;
+            box-shadow: 0 0 20px rgba(237, 187, 0, 0.3);
+        }
+
+        .player-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+        }
+
+        .player-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .manager-card .player-img {
+            border-color: var(--barca-gold);
+            background: rgba(237, 187, 0, 0.2);
+        }
+
+        .player-card h4 {
+            font-size: 1.2em;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .player-card p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9em;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(var(--blur-amount));
+            border-left: 4px solid var(--barca-gold);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(10px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .timeline-year {
+            font-size: 1.5em;
+            color: var(--barca-gold);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .moments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .moment-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+
+        .moment-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--barca-gold);
+            box-shadow: 0 15px 30px rgba(237, 187, 0, 0.3);
+        }
+
+        .stadium-image-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(237, 187, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stadium-image-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--barca-gold);
+            box-shadow: 0 15px 30px rgba(237, 187, 0, 0.4);
+        }
+
+        .moment-card h3 {
+            color: var(--barca-gold);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(237, 187, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            animation: statPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes statPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--barca-gold);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+        }
+
+        .audio-player {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 2px solid rgba(237, 187, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(0, 26, 51, 0.95);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 3px solid var(--barca-gold);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px rgba(237, 187, 0, 0.4);
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(237, 187, 0, 0.3);
+        }
+
+        .modal-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            display: block;
+            filter: drop-shadow(0 0 20px rgba(237, 187, 0, 0.8));
+        }
+
+        .modal-title {
+            font-size: 2.5em;
+            color: var(--barca-gold);
+            margin-bottom: 10px;
+        }
+
+        .modal-subtitle {
+            font-size: 1.3em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .victory-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(var(--blur-amount));
+            border-left: 4px solid var(--barca-gold);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .victory-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(10px);
+        }
+
+        .victory-year {
+            font-size: 2em;
+            color: var(--barca-gold);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .victory-venue {
+            font-size: 1.2em;
+            color: var(--barca-blue);
+            margin-bottom: 5px;
+        }
+
+        .victory-score {
+            font-size: 1.5em;
+            color: var(--barca-red);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .victory-story {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.7;
+            font-size: 1.05em;
+        }
+
+        .years-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .year-badge {
+            background: rgba(237, 187, 0, 0.2);
+            border: 2px solid var(--barca-gold);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .manager-detail {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(var(--blur-amount));
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .manager-detail h3 {
+            color: var(--barca-gold);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(237, 187, 0, 0.3);
+        }
+
+        .club-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--barca-gold);
+        }
+
+        .club-name {
+            font-size: 1.2em;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .club-years {
+            color: var(--barca-gold);
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .achievement-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .achievement-list li {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .achievement-list li::before {
+            content: '⭐';
+            position: absolute;
+            left: 0;
+            color: var(--barca-gold);
+        }
+
+        .philosophy-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .philosophy-list li {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .philosophy-list li::before {
+            content: '⚽';
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--barca-gold);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4a700;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.5em; }
+            .panel-content { padding: 20px; margin: 20px; }
+            .modal-content { padding: 25px; margin: 20px; }
+            .islands-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <div class="radial-glow glow-1"></div>
+        <div class="radial-glow glow-2"></div>
+        <div class="radial-glow glow-3"></div>
+        <div class="particles" id="particles"></div>
+        <canvas id="stadium-canvas" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 300px; pointer-events: none; z-index: 1;"></canvas>
+    </div>
+
+    <div class="main-container">
+        <div class="header">
+            <h1>⚽ FC BARCELONA UNIVERSE ⚽</h1>
+            <p>Més que un club - More than a club</p>
+        </div>
+
+        <div class="islands-grid">
+            <div class="island" onclick="openPanel('history')">
+                <span class="island-icon">📜</span>
+                <h3>History</h3>
+                <p>Journey through Barcelona's legendary timeline since 1899</p>
+            </div>
+            <div class="island" onclick="openPanel('trophies')">
+                <span class="island-icon">🏆</span>
+                <h3>Trophies</h3>
+                <p>Explore our cabinet of glory and historic victories</p>
+            </div>
+            <div class="island" onclick="openPanel('players')">
+                <span class="island-icon">⭐</span>
+                <h3>Players &amp; Manager</h3>
+                <p>Meet the stars who make Barcelona shine</p>
+            </div>
+            <div class="island" onclick="openPanel('moments')">
+                <span class="island-icon">✨</span>
+                <h3>Iconic Moments</h3>
+                <p>Relive the greatest moments in club history</p>
+            </div>
+            <div class="island" onclick="openPanel('stadium')">
+                <span class="island-icon">🏟️</span>
+                <h3>Camp Nou</h3>
+                <p>Experience the temple of football excellence</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Panel -->
+    <div id="history" class="panel">
+        <div class="panel-content">
+            <button class="close-btn" onclick="closePanel('history')">×</button>
+            <div class="panel-header">
+                <h2>📜 Barcelona History</h2>
+                <p>125+ Years of Excellence</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">1899</div>
+                    <p>FC Barcelona was founded by Joan Gamper and a group of Swiss, English, and Catalan footballers.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">1929</div>
+                    <p>Barcelona wins their first La Liga title, beginning a legacy of Spanish dominance.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">1992</div>
+                    <p>The Dream Team wins Barcelona's first European Cup at Wembley with Koeman's legendary free kick.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2009</div>
+                    <p>Guardiola's Barcelona achieves the historic treble, revolutionizing football with tiki-taka.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2015</div>
+                    <p>The MSN trio (Messi, Suárez, Neymar) leads Barcelona to a second treble with 122 goals.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2024</div>
+                    <p>Hansi Flick becomes manager, bringing his winning mentality and high-pressing philosophy.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2025</div>
+                    <p>Barcelona wins La Liga, Copa del Rey, and Spanish Super Cup under Hansi Flick's leadership.</p>
+                </div>
+            </div>
+            <div class="audio-player">
+                <h3>🎵 Club Anthem</h3>
+                <p>"El Cant del Barça" - The heartbeat of every Culé</p>
+                <audio id="anthemAudio" src="barca-anthem.wav" style="display: none;"></audio>
+                <button id="playButton" class="btn btn--primary" style="margin-top: 15px; padding: 12px 30px; font-size: 1.1em; background: var(--barca-gold); color: var(--barca-blue); border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s;">▶️ Play Anthem</button>
+                <div id="lyricsContainer" style="display: none; margin-top: 25px; background: rgba(255,255,255,0.1); padding: 25px; border-radius: 12px; border: 2px solid rgba(237,187,0,0.3); animation: slideDown 0.5s ease-out;">
+                    <pre style="color: rgba(255,255,255,0.95); font-size: 1.05em; line-height: 1.8; text-align: center; font-family: inherit; white-space: pre-wrap;">El Cant del Barça
+
+Tot el camp es un clam
+Som la gent blaugrana
+Tant se val d'on venim
+Si del sud o del nord
+
+Ara estem d'acord, estem d'acord
+Una bandera ens agermana
+Blaugrana al vent
+Un crit valent
+
+Tenim un nom el sap tothom
+Barça, Barça, Baaarça!
+
+🔵🔴 Visca el Barça! 🔴🔵</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trophies Panel -->
+    <div id="trophies" class="panel">
+        <div class="panel-content">
+            <button class="close-btn" onclick="closePanel('trophies')">×</button>
+            <div class="panel-header">
+                <h2>🏆 Trophy Cabinet</h2>
+                <p>Click on any trophy to explore its history</p>
+            </div>
+            <div class="trophies-grid">
+                <div class="trophy-card" onclick="openTrophyModal('laliga')">
+                    <span class="trophy-icon">🏆</span>
+                    <h3>La Liga</h3>
+                    <div class="trophy-count" data-target="27">0</div>
+                    <p>Spanish Champions</p>
+                </div>
+                <div class="trophy-card" onclick="openTrophyModal('ucl')">
+                    <span class="trophy-icon">⭐</span>
+                    <h3>Champions League</h3>
+                    <div class="trophy-count" data-target="5">0</div>
+                    <p>European Glory</p>
+                </div>
+                <div class="trophy-card" onclick="openTrophyModal('copa')">
+                    <span class="trophy-icon">🥇</span>
+                    <h3>Copa del Rey</h3>
+                    <div class="trophy-count" data-target="32">0</div>
+                    <p>Cup Kings</p>
+                </div>
+                <div class="trophy-card" onclick="openTrophyModal('supercup')">
+                    <span class="trophy-icon">🏅</span>
+                    <h3>Spanish Super Cup</h3>
+                    <div class="trophy-count" data-target="14">0</div>
+                    <p>Supercopa de España</p>
+                </div>
+                <div class="trophy-card" onclick="openTrophyModal('cwc')">
+                    <span class="trophy-icon">🌍</span>
+                    <h3>Club World Cup</h3>
+                    <div class="trophy-count" data-target="3">0</div>
+                    <p>World Champions</p>
+                </div>
+                <div class="trophy-card" onclick="openTrophyModal('uefasuper')">
+                    <span class="trophy-icon">🇪🇺</span>
+                    <h3>UEFA Super Cup</h3>
+                    <div class="trophy-count" data-target="5">0</div>
+                    <p>European Supremacy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Players Panel -->
+    <div id="players" class="panel">
+        <div class="panel-content">
+            <button class="close-btn" onclick="closePanel('players')">×</button>
+            <div class="panel-header">
+                <h2>⭐ Players &amp; Manager</h2>
+                <p>The Stars of Camp Nou</p>
+            </div>
+
+            <!-- Manager Section -->
+            <div class="players-section">
+                <h3>👔 MANAGER</h3>
+                <div class="players-grid">
+                    <div class="player-card manager-card" onclick="openManagerModal()">
+                        <div class="player-img">
+                            <img src="flick.png" alt="Hansi Flick" onerror="this.style.display='none'; this.parentElement.innerHTML='👔'">
+                        </div>
+                        <h4>Hansi Flick</h4>
+                        <p>Head Coach 🇩🇪</p>
+                        <p style="font-size: 0.85em; margin-top: 8px; color: var(--barca-gold);">Click for details</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attack Section -->
+            <div class="players-section">
+                <h3>⚡ ATTACK</h3>
+                <div class="players-grid">
+                    <div class="player-card" onclick="openPlayerModal('rashford')">
+                        <div class="player-img">
+                            <img src="rashford.png" alt="Marcus Rashford" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Marcus Rashford</h4>
+                        <p>Forward #14 🏴󠁧󠁢󠁥󠁮󠁧󠁿</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('lewandowski')">
+                        <div class="player-img">
+                            <img src="lewa.png" alt="Robert Lewandowski" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Robert Lewandowski</h4>
+                        <p>Striker #9 🇵🇱</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('yamal')">
+                        <div class="player-img">
+                            <img src="lamine.png" alt="Lamine Yamal" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Lamine Yamal</h4>
+                        <p>Winger #10 🇪🇸</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('raphinha')">
+                        <div class="player-img">
+                            <img src="raphinha.png" alt="Raphinha" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Raphinha</h4>
+                        <p>Winger #11 🇧🇷</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Midfield Section -->
+            <div class="players-section">
+                <h3>⚙️ MIDFIELD</h3>
+                <div class="players-grid">
+                    <div class="player-card" onclick="openPlayerModal('lopez')">
+                        <div class="player-img">
+                            <img src="lopez.png" alt="Fermín López" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Fermín López</h4>
+                        <p>Midfielder #16 🇪🇸</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('olmo')">
+                        <div class="player-img">
+                            <img src="olmo.png" alt="Dani Olmo" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Dani Olmo</h4>
+                        <p>Midfielder #20 🇪🇸</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('dejong')">
+                        <div class="player-img">
+                            <img src="dejong.png" alt="Frenkie de Jong" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Frenkie de Jong</h4>
+                        <p>Midfielder #21 🇳🇱</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('pedri')">
+                        <div class="player-img">
+                            <img src="pedri.png" alt="Pedri" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽'">
+                        </div>
+                        <h4>Pedri</h4>
+                        <p>Midfielder #8 🇪🇸</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Defense Section -->
+            <div class="players-section">
+                <h3>🛡️ DEFENSE</h3>
+                <div class="players-grid">
+                    <div class="player-card" onclick="openPlayerModal('balde')">
+                        <div class="player-img">
+                            <img src="balde.png" alt="Alejandro Balde" onerror="this.style.display='none'; this.parentElement.innerHTML='🛡️'">
+                        </div>
+                        <h4>Alejandro Balde</h4>
+                        <p>Left Back #3 🇪🇸</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('cubarsi')">
+                        <div class="player-img">
+                            <img src="cubarsi.png" alt="Pau Cubarsí" onerror="this.style.display='none'; this.parentElement.innerHTML='🛡️'">
+                        </div>
+                        <h4>Pau Cubarsí</h4>
+                        <p>Center Back #5 🇪🇸</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('araujo')">
+                        <div class="player-img">
+                            <img src="araujo.png" alt="Ronald Araújo" onerror="this.style.display='none'; this.parentElement.innerHTML='🛡️'">
+                        </div>
+                        <h4>Ronald Araújo</h4>
+                        <p>Center Back #4 🇺🇾</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('garcia')">
+                        <div class="player-img">
+                            <img src="eric.png" alt="Eric García" onerror="this.style.display='none'; this.parentElement.innerHTML='🛡️'">
+                        </div>
+                        <h4>Eric García</h4>
+                        <p>Center Back #24 🇪🇸</p>
+                    </div>
+                    <div class="player-card" onclick="openPlayerModal('kounde')">
+                        <div class="player-img">
+                            <img src="kounde.png" alt="Jules Koundé" onerror="this.style.display='none'; this.parentElement.innerHTML='🛡️'">
+                        </div>
+                        <h4>Jules Koundé</h4>
+                        <p>Right Back #23 🇫🇷</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goalkeeper Section -->
+            <div class="players-section">
+                <h3>🧤 GOALKEEPER</h3>
+                <div class="players-grid">
+                    <div class="player-card" onclick="openPlayerModal('szczesny')">
+                        <div class="player-img">
+                            <img src="szczesny.png" alt="Wojciech Szczęsny" onerror="this.style.display='none'; this.parentElement.innerHTML='🧤'">
+                        </div>
+                        <h4>Wojciech Szczęsny</h4>
+                        <p>Goalkeeper #25 🇵🇱</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moments Panel -->
+    <div id="moments" class="panel">
+        <div class="panel-content">
+            <button class="close-btn" onclick="closePanel('moments')">×</button>
+            <div class="panel-header">
+                <h2>✨ Iconic Moments</h2>
+                <p>Unforgettable Barcelona Memories</p>
+            </div>
+            <div class="moments-grid">
+                <div class="moment-card">
+                    <h3>⚽ La Remontada (2017)</h3>
+                    <p>Barcelona overcame a 4-0 first-leg deficit to beat PSG 6-1 at Camp Nou in the Champions League Round of 16. Sergi Roberto's last-minute winner completed the greatest comeback in Champions League history.</p>
+                </div>
+                <div class="moment-card">
+                    <h3>🎯 Messi's 91 Goals (2012)</h3>
+                    <p>Lionel Messi scored an incredible 91 goals in a calendar year, breaking Gerd Müller's 40-year-old record. A feat that may never be matched in football history.</p>
+                </div>
+                <div class="moment-card">
+                    <h3>🏆 The Sextuple (2009)</h3>
+                    <p>Barcelona won all six possible trophies in one year: La Liga, Copa del Rey, Champions League, Spanish Super Cup, UEFA Super Cup, and FIFA Club World Cup under Pep Guardiola.</p>
+                </div>
+                <div class="moment-card">
+                    <h3>⭐ Iniesta's World Cup Goal (2010)</h3>
+                    <p>While playing for Spain, Barcelona legend Andrés Iniesta scored the winning goal in the 2010 World Cup final, cementing his status as one of football's greatest midfielders.</p>
+                </div>
+                <div class="moment-card">
+                    <h3>🎪 Ronaldinho Era (2003-2008)</h3>
+                    <p>Ronaldinho brought joy back to Barcelona, winning two La Liga titles and the 2006 Champions League. His magical performances and smile made him a global icon.</p>
+                </div>
+                <div class="moment-card">
+                    <h3>🌟 MSN Domination (2014-2017)</h3>
+                    <p>The trio of Messi, Suárez, and Neymar scored 364 goals together in three seasons, winning a treble in 2015 and creating one of football's most feared attacks.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stadium Panel -->
+    <div id="stadium" class="panel">
+        <div class="panel-content">
+            <button class="close-btn" onclick="closePanel('stadium')">×</button>
+            <div class="panel-header">
+                <h2>🏟️ Camp Nou</h2>
+                <p>The Temple of Football</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" data-target="105000">0</div>
+                    <div class="stat-label">Capacity</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="1957">0</div>
+                    <div class="stat-label">Opened</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="2026">0</div>
+                    <div class="stat-label">Renovation</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" data-target="1.6">0</div>
+                    <div class="stat-label">Investment (€B)</div>
+                </div>
+            </div>
+            <div style="margin-top: 40px; background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); padding: 30px; border-radius: 15px;">
+                <h3 style="color: var(--barca-gold); font-size: 2em; margin-bottom: 20px;">🏗️ Renovation Features</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 20px;">
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">360° roof coverage for all-weather comfort</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">Increased capacity to 105,000 seats</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">State-of-the-art LED lighting and screens</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">Premium hospitality and VIP areas</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">Immersive Barcelona museum experience</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">Solar panel integration for sustainability</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">Enhanced accessibility throughout</p>
+                    </div>
+                    <div style="display: flex; align-items: start; gap: 12px;">
+                        <span style="color: var(--barca-gold); font-size: 1.3em; flex-shrink: 0;">✓</span>
+                        <p style="color: rgba(255,255,255,0.9); margin: 0;">Advanced security and safety systems</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h3 style="color: var(--barca-gold); font-size: 2em; margin-bottom: 25px; text-align: center;">🏟️ Stadium Evolution</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px;">
+                    <div class="stadium-image-card">
+                        <div style="width: 100%; height: 250px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <img src="oldcampnou.png" alt="Historic Camp Nou" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
+                        </div>
+                        <h4 style="color: var(--barca-gold); font-size: 1.4em; margin-bottom: 10px;">Historic Camp Nou (1957-2024)</h4>
+                        <p style="color: rgba(255,255,255,0.8); line-height: 1.6;">The legendary home that witnessed countless victories and unforgettable moments</p>
+                    </div>
+                    <div class="stadium-image-card">
+                        <div style="width: 100%; height: 250px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <img src="newcampnou.png" alt="Spotify Camp Nou" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
+                        </div>
+                        <h4 style="color: var(--barca-gold); font-size: 1.4em; margin-bottom: 10px;">Spotify Camp Nou (2026+)</h4>
+                        <p style="color: rgba(255,255,255,0.8); line-height: 1.6;">The future of football stadiums - modern, sustainable, and iconic</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trophy Modal -->
+    <div id="trophyModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeTrophyModal()">×</button>
+            <div id="trophyModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Player Modal -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="close-btn" onclick="closePlayerModal()">×</button>
+            <div id="playerModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Manager Modal -->
+    <div id="managerModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeManagerModal()">×</button>
+            <div class="modal-header">
+                <span class="modal-icon">👔</span>
+                <h2 class="modal-title">Hansi Flick</h2>
+                <p class="modal-subtitle">Head Coach 🇩🇪</p>
+            </div>
+            
+            <div class="manager-detail">
+                <p style="font-size: 1.15em; color: rgba(255,255,255,0.9); line-height: 1.7; margin-bottom: 20px;">
+                    <strong>Full Name:</strong> Hans-Dieter "Hansi" Flick<br>
+                    <strong>Nationality:</strong> Germany 🇩🇪<br>
+                    <strong>Age:</strong> 59 years old
+                </p>
+                <p style="line-height: 1.7; color: rgba(255,255,255,0.85);">
+                    Hansi Flick is one of modern football's most successful coaches. After a distinguished playing career at Bayern Munich, he became Joachim Löw's assistant and helped Germany win the 2014 World Cup. His managerial masterpiece came at Bayern Munich (2019-2021), where he won an unprecedented sextuple and went unbeaten in the Champions League. Now at Barcelona, he continues his winning legacy with beautiful, attacking football.
+                </p>
+            </div>
+
+            <div class="manager-detail">
+                <h3>🏆 Clubs Managed</h3>
+                
+                <div class="club-item">
+                    <div class="club-name">FC Barcelona</div>
+                    <div class="club-years">2024 - Present</div>
+                    <ul class="achievement-list">
+                        <li>La Liga 2024-25</li>
+                        <li>Copa del Rey 2025</li>
+                        <li>Spanish Super Cup 2025</li>
+                    </ul>
+                </div>
+
+                <div class="club-item">
+                    <div class="club-name">Bayern Munich</div>
+                    <div class="club-years">2019 - 2021</div>
+                    <ul class="achievement-list">
+                        <li>UEFA Champions League 2020</li>
+                        <li>Bundesliga 2020, 2021</li>
+                        <li>DFB-Pokal 2020</li>
+                        <li>UEFA Super Cup 2020</li>
+                        <li>FIFA Club World Cup 2020</li>
+                        <li>DFL-Supercup 2020</li>
+                        <li>Historic Sextuple - 6 trophies in 2020</li>
+                        <li>100% Champions League win record</li>
+                        <li>23-match winning streak record</li>
+                    </ul>
+                </div>
+
+                <div class="club-item">
+                    <div class="club-name">Germany National Team</div>
+                    <div class="club-years">2021-2024 (Head Coach), 2006-2014 (Assistant)</div>
+                    <ul class="achievement-list">
+                        <li>2014 FIFA World Cup Champion (as assistant)</li>
+                        <li>Tactical innovations with Joachim Löw</li>
+                    </ul>
+                </div>
+
+                <div class="club-item">
+                    <div class="club-name">TSG 1899 Hoffenheim</div>
+                    <div class="club-years">2000 - 2005</div>
+                    <ul class="achievement-list">
+                        <li>Oberliga Baden-Württemberg champion</li>
+                        <li>Multiple regional cups</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="manager-detail">
+                <h3>⚽ Playing Career</h3>
+                <div class="club-item">
+                    <div class="club-name">Bayern Munich</div>
+                    <div class="club-years">1985 - 1990</div>
+                    <p style="color: rgba(255,255,255,0.8); margin-top: 10px;"><strong>Position:</strong> Midfielder</p>
+                    <ul class="achievement-list">
+                        <li>104 appearances</li>
+                        <li>4 Bundesliga titles</li>
+                        <li>1987 European Cup finalist</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="manager-detail">
+                <h3>📋 Coaching Philosophy</h3>
+                <ul class="philosophy-list">
+                    <li>High-intensity pressing and counter-pressing to win the ball quickly</li>
+                    <li>Aggressive attacking play with a 4-2-3-1 formation</li>
+                    <li>Exceptional man-management and player development</li>
+                    <li>Focus on team unity and collective success over individuals</li>
+                    <li>Tactical flexibility and adaptability to opponents</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        // Create enhanced particle system
+        const particlesContainer = document.getElementById('particles');
+        
+        // Golden star particles
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle particle-gold';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        // Blue sparkle particles
+        for (let i = 0; i < 25; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle particle-blue';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 25 + 's';
+            particle.style.animationDuration = (Math.random() * 12 + 18) + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        // Red dot particles
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle particle-red';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 18 + 's';
+            particle.style.animationDuration = (Math.random() * 8 + 12) + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        // Star particles
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle particle-star';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 30 + 's';
+            particle.style.animationDuration = (Math.random() * 15 + 20) + 's';
+            particlesContainer.appendChild(particle);
+        }
+        
+        // Draw Camp Nou stadium with effects
+        const canvas = document.getElementById('stadium-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = 300;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        let time = 0;
+        function drawStadium() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Stadium structure
+            const centerX = canvas.width / 2;
+            const baseY = canvas.height - 50;
+            
+            // Stadium base
+            ctx.fillStyle = 'rgba(0, 77, 152, 0.3)';
+            ctx.fillRect(centerX - 200, baseY - 60, 400, 80);
+            
+            // Floodlight effects (animated)
+            for (let i = 0; i < 4; i++) {
+                const x = centerX - 150 + i * 100;
+                const intensity = Math.sin(time + i) * 0.3 + 0.7;
+                
+                // Light beam
+                const gradient = ctx.createLinearGradient(x, baseY - 100, x, baseY - 300);
+                gradient.addColorStop(0, `rgba(237, 187, 0, ${0.3 * intensity})`);
+                gradient.addColorStop(1, 'rgba(237, 187, 0, 0)');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(x - 30, baseY - 100);
+                ctx.lineTo(x + 30, baseY - 100);
+                ctx.lineTo(x + 60, baseY - 300);
+                ctx.lineTo(x - 60, baseY - 300);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Light source
+                ctx.fillStyle = `rgba(237, 187, 0, ${intensity})`;
+                ctx.beginPath();
+                ctx.arc(x, baseY - 100, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glow
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(237, 187, 0, 0.8)';
+                ctx.beginPath();
+                ctx.arc(x, baseY - 100, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Barcelona flags on top
+            for (let i = 0; i < 3; i++) {
+                const flagX = centerX - 100 + i * 100;
+                const flagY = baseY - 140;
+                const wave = Math.sin(time * 2 + i) * 5;
+                
+                ctx.fillStyle = 'rgba(0, 77, 152, 0.8)';
+                ctx.fillRect(flagX, flagY + wave, 30, 20);
+                ctx.fillStyle = 'rgba(193, 0, 42, 0.8)';
+                ctx.fillRect(flagX, flagY + 10 + wave, 30, 10);
+            }
+            
+            time += 0.05;
+            requestAnimationFrame(drawStadium);
+        }
+        drawStadium();
+
+        // Panel functions (must be defined before making global)
+        function openPanel(panelId) {
+            document.getElementById(panelId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Animate trophy counters when trophies panel opens
+            if (panelId === 'trophies') {
+                setTimeout(() => {
+                    animateCounters('#trophies .trophy-count');
+                }, 300);
+            }
+            
+            // Animate stadium stats when stadium panel opens
+            if (panelId === 'stadium') {
+                setTimeout(() => {
+                    animateCounters('#stadium .stat-number');
+                }, 300);
+            }
+        }
+
+        function closePanel(panelId) {
+            document.getElementById(panelId).classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Trophy modal data
+        const trophyData = {
+            laliga: {
+                icon: '🏆',
+                name: 'La Liga',
+                count: 27,
+                years: [1929, 1945, 1948, 1949, 1952, 1953, 1959, 1960, 1974, 1985, 1991, 1992, 1993, 1994, 1998, 1999, 2005, 2006, 2009, 2010, 2011, 2013, 2015, 2016, 2018, 2023, 2025],
+                story: "Barcelona has won La Liga 27 times, establishing themselves as one of Spain's most successful clubs. From their first title in 1929 to recent victories in 2023 and 2025 under Hansi Flick, Barcelona's dominance spans nearly a century of Spanish football."
+            },
+            ucl: {
+                icon: '⭐',
+                name: 'UEFA Champions League',
+                count: 5,
+                detailedWins: [
+                    {
+                        year: 1992,
+                        venue: 'Wembley Stadium, London',
+                        opponent: 'Sampdoria',
+                        score: '1-0',
+                        story: "Barcelona's maiden European Cup triumph came at the iconic Wembley Stadium. Ronald Koeman's legendary free kick in extra time secured victory against Sampdoria, launching the Dream Team era under Johan Cruyff and cementing Barcelona's place among European elite."
+                    },
+                    {
+                        year: 2006,
+                        venue: 'Stade de France, Paris',
+                        opponent: 'Arsenal',
+                        score: '2-1',
+                        story: 'After 14 agonizing years, Barcelona returned to European glory in Paris. Despite going behind early, second-half goals from Samuel Eto\'o and Andrés Iniesta completed the comeback against Arsenal. Frank Rijkaard\'s Barcelona showcased their attacking prowess in an emotional triumph.'
+                    },
+                    {
+                        year: 2009,
+                        venue: 'Stadio Olimpico, Rome',
+                        opponent: 'Manchester United',
+                        score: '2-0',
+                        story: "The dawn of Guardiola's revolution. Barcelona's tiki-taka philosophy mesmerized the world as they outplayed Manchester United in Rome. Samuel Eto'o and Lionel Messi scored to complete a historic treble - La Liga, Copa del Rey, and Champions League in one magical season."
+                    },
+                    {
+                        year: 2011,
+                        venue: 'Wembley Stadium, London',
+                        opponent: 'Manchester United',
+                        score: '3-1',
+                        story: "Perhaps the greatest Champions League final performance ever witnessed. Barcelona returned to Wembley and demolished Manchester United with sublime football. Pedro, David Villa, and Messi scored as Barcelona dominated with 68% possession, showcasing the peak of Guardiola's masterpiece."
+                    },
+                    {
+                        year: 2015,
+                        venue: 'Olympiastadion, Berlin',
+                        opponent: 'Juventus',
+                        score: '3-1',
+                        story: "The MSN era reached its zenith in Berlin. Luis Suárez opened the scoring, Juventus equalized, but then Suárez, Neymar, and Messi (who scored twice) secured Barcelona's fifth European Cup. This completed the club's second treble under Luis Enrique, with the devastating MSN trio scoring 122 goals that season."
+                    }
+                ]
+            },
+            copa: {
+                icon: '🥇',
+                name: 'Copa del Rey',
+                count: 32,
+                recentYears: '2009, 2012, 2015, 2016, 2017, 2018, 2021, 2025',
+                story: 'Barcelona holds the all-time record with 32 Copa del Rey titles, eight more than Athletic Bilbao. Their recent dominance includes six wins in the last decade, with Hansi Flick adding another in 2025. From 1910 to 2025, Barcelona has been the undisputed King of the Cup.'
+            },
+            supercup: {
+                icon: '🏅',
+                name: 'Spanish Super Cup',
+                count: 14,
+                story: "Barcelona has claimed 14 Spanish Super Cup titles, consistently proving their dominance at the start of each season. These victories showcase Barcelona's ability to maintain excellence year after year."
+            },
+            cwc: {
+                icon: '🌍',
+                name: 'FIFA Club World Cup',
+                count: 3,
+                years: [2009, 2011, 2015],
+                story: 'Barcelona has been crowned world champions three times (2009, 2011, 2015), each time during their most dominant eras. These victories established Barcelona as a true global football powerhouse, conquering champions from every continent.'
+            },
+            uefasuper: {
+                icon: '🇪🇺',
+                name: 'UEFA Super Cup',
+                count: 5,
+                years: [1992, 1997, 2009, 2011, 2015],
+                story: "Five UEFA Super Cup victories cement Barcelona's European supremacy. Each win came against Europa League champions, proving Barcelona's dominance across all European competitions."
+            }
+        };
+
+        function openTrophyModal(trophyKey) {
+            const trophy = trophyData[trophyKey];
+            const modal = document.getElementById('trophyModal');
+            const content = document.getElementById('trophyModalContent');
+            
+            let html = `
+                <div class="modal-header">
+                    <span class="modal-icon">${trophy.icon}</span>
+                    <h2 class="modal-title">${trophy.name}</h2>
+                    <p class="modal-subtitle">${trophy.count} ${trophy.count === 1 ? 'Title' : 'Titles'}</p>
+                </div>
+            `;
+            
+            if (trophy.detailedWins) {
+                html += '<div style="margin-top: 30px;">';
+                trophy.detailedWins.forEach(win => {
+                    html += `
+                        <div class="victory-item">
+                            <div class="victory-year">${win.year}</div>
+                            <div class="victory-venue">📍 ${win.venue}</div>
+                            <div class="victory-score">vs ${win.opponent} • ${win.score}</div>
+                            <p class="victory-story">${win.story}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else {
+                html += `<p style="font-size: 1.15em; line-height: 1.8; color: rgba(255,255,255,0.9); margin: 25px 0;">${trophy.story}</p>`;
+                
+                if (trophy.years) {
+                    html += '<div style="margin-top: 25px;"><h3 style="color: var(--barca-gold); margin-bottom: 15px;">🏆 Winning Years</h3><div class="years-list">';
+                    trophy.years.forEach(year => {
+                        html += `<span class="year-badge">${year}</span>`;
+                    });
+                    html += '</div></div>';
+                }
+                
+                if (trophy.recentYears) {
+                    html += `<div style="margin-top: 20px;"><p style="color: rgba(255,255,255,0.8);"><strong>Recent Victories:</strong> ${trophy.recentYears}</p></div>`;
+                }
+            }
+            
+            content.innerHTML = html;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTrophyModal() {
+            document.getElementById('trophyModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openManagerModal() {
+            document.getElementById('managerModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeManagerModal() {
+            document.getElementById('managerModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Player data
+        const playerData = {
+            rashford: {
+                name: 'Marcus Rashford',
+                number: 14,
+                position: 'Forward',
+                nationality: 'England',
+                flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+                image: 'rashford.png'
+            },
+            lewandowski: {
+                name: 'Robert Lewandowski',
+                number: 9,
+                position: 'Striker',
+                nationality: 'Poland',
+                flag: '🇵🇱',
+                image: 'lewa.png'
+            },
+            yamal: {
+                name: 'Lamine Yamal',
+                number: 10,
+                position: 'Winger',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'lamine.png'
+            },
+            lopez: {
+                name: 'Fermín López',
+                number: 16,
+                position: 'Midfielder',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'lopez.png'
+            },
+            olmo: {
+                name: 'Dani Olmo',
+                number: 20,
+                position: 'Midfielder',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'olmo.png'
+            },
+            dejong: {
+                name: 'Frenkie de Jong',
+                number: 21,
+                position: 'Midfielder',
+                nationality: 'Netherlands',
+                flag: '🇳🇱',
+                image: 'dejong.png'
+            },
+            balde: {
+                name: 'Alejandro Balde',
+                number: 3,
+                position: 'Left Back',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'balde.png'
+            },
+            cubarsi: {
+                name: 'Pau Cubarsí',
+                number: 5,
+                position: 'Center Back',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'cubarsi.png'
+            },
+            araujo: {
+                name: 'Ronald Araújo',
+                number: 4,
+                position: 'Center Back',
+                nationality: 'Uruguay',
+                flag: '🇺🇾',
+                image: 'araujo.png'
+            },
+            garcia: {
+                name: 'Eric García',
+                number: 24,
+                position: 'Center Back',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'eric.png'
+            },
+            szczesny: {
+                name: 'Wojciech Szczęsny',
+                number: 25,
+                position: 'Goalkeeper',
+                nationality: 'Poland',
+                flag: '🇵🇱',
+                image: 'szczesny.png'
+            },
+            raphinha: {
+                name: 'Raphinha',
+                number: 11,
+                position: 'Winger',
+                nationality: 'Brazil',
+                flag: '🇧🇷',
+                image: 'raphinha.png'
+            },
+            pedri: {
+                name: 'Pedri',
+                number: 8,
+                position: 'Midfielder',
+                nationality: 'Spain',
+                flag: '🇪🇸',
+                image: 'pedri.png'
+            },
+            kounde: {
+                name: 'Jules Koundé',
+                number: 23,
+                position: 'Right Back',
+                nationality: 'France',
+                flag: '🇫🇷',
+                image: 'kounde.png'
+            }
+        };
+
+        function openPlayerModal(playerKey) {
+            const player = playerData[playerKey];
+            const modal = document.getElementById('playerModal');
+            const content = document.getElementById('playerModalContent');
+            
+            const html = `
+                <div class="modal-header">
+                    <div style="width: 120px; height: 120px; margin: 0 auto 20px; border-radius: 50%; border: 4px solid var(--barca-gold); overflow: hidden; box-shadow: 0 0 30px rgba(237, 187, 0, 0.5); background: rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; font-size: 3em;">
+                        <img src="${player.image}" alt="${player.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
+                    </div>
+                    <h2 class="modal-title">${player.name}</h2>
+                    <p class="modal-subtitle" style="font-size: 1.5em; color: var(--barca-gold); margin-top: 10px;">#${player.number}</p>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); padding: 25px; border-radius: 12px; margin-top: 25px;">
+                    <div style="display: grid; gap: 15px;">
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <span style="color: rgba(255, 255, 255, 0.7); font-weight: 500;">Position:</span>
+                            <span style="color: white; font-weight: 600;">${player.position}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <span style="color: rgba(255, 255, 255, 0.7); font-weight: 500;">Nationality:</span>
+                            <span style="color: white; font-weight: 600;">${player.nationality} ${player.flag}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 12px 0;">
+                            <span style="color: rgba(255, 255, 255, 0.7); font-weight: 500;">Jersey Number:</span>
+                            <span style="color: var(--barca-gold); font-weight: bold; font-size: 1.3em;">#${player.number}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePlayerModal() {
+            document.getElementById('playerModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modals when clicking outside
+        document.getElementById('trophyModal').addEventListener('click', function(e) {
+            if (e.target === this) closeTrophyModal();
+        });
+
+        document.getElementById('managerModal').addEventListener('click', function(e) {
+            if (e.target === this) closeManagerModal();
+        });
+
+        document.getElementById('playerModal').addEventListener('click', function(e) {
+            if (e.target === this) closePlayerModal();
+        });
+
+        // Parallax effect
+        document.addEventListener('mousemove', function(e) {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            document.querySelectorAll('.island').forEach((island, index) => {
+                const speed = (index + 1) * 1.1;
+                island.style.transform = `translate(${moveX * speed}px, ${moveY * speed}px) rotateY(${moveX * 0.5 * speed}deg) rotateX(${-moveY * 0.3 * speed}deg)`;
+            });
+        });
+
+        // Animated scanning Barcelona stripes effect overlay
+        const scan = document.createElement('div');
+        scan.style.position = 'fixed';
+        scan.style.top = '0';
+        scan.style.left = '0';
+        scan.style.width = '100vw';
+        scan.style.height = '100vh';
+        scan.style.pointerEvents = 'none';
+        scan.style.zIndex = '5';
+        scan.style.background = 'repeating-linear-gradient(120deg, rgba(0,77,152,0.09) 0 15px, rgba(193,0,42,0.09) 15px 30px, transparent 30px 120px)';
+        scan.style.backgroundSize = '200% 200%';
+        scan.style.mixBlendMode = 'soft-light';
+        scan.animate([
+          { backgroundPosition: '0% 0%' },
+          { backgroundPosition: '100% 100%' }
+        ], {duration: 12000, iterations: Infinity});
+        document.body.appendChild(scan);
+        
+        // Counter animation function
+        function animateCounters(selector) {
+            document.querySelectorAll(selector).forEach(counter => {
+                const target = parseFloat(counter.getAttribute('data-target'));
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        counter.textContent = target % 1 === 0 ? target : target.toFixed(1);
+                        clearInterval(timer);
+                    } else {
+                        counter.textContent = current % 1 === 0 ? Math.floor(current) : current.toFixed(1);
+                    }
+                }, 16);
+            });
+        }
+        
+        // Anthem player functionality
+        const anthemAudio = document.getElementById('anthemAudio');
+        const playButton = document.getElementById('playButton');
+        const lyricsContainer = document.getElementById('lyricsContainer');
+        
+        playButton.addEventListener('click', function() {
+            if (anthemAudio.paused) {
+                anthemAudio.play().catch(e => {
+                    // Audio playback might fail, show lyrics anyway
+                    console.log('Audio playback not available');
+                });
+                playButton.textContent = '⏸️ Pause Anthem';
+                playButton.style.background = 'var(--barca-red)';
+                playButton.style.color = 'white';
+                lyricsContainer.style.display = 'block';
+            } else {
+                anthemAudio.pause();
+                playButton.textContent = '▶️ Play Anthem';
+                playButton.style.background = 'var(--barca-gold)';
+                playButton.style.color = 'var(--barca-blue)';
+                lyricsContainer.style.display = 'none';
+            }
+        });
+        
+        anthemAudio.addEventListener('ended', function() {
+            playButton.textContent = '▶️ Play Anthem';
+            playButton.style.background = 'var(--barca-gold)';
+            playButton.style.color = 'var(--barca-blue)';
+            lyricsContainer.style.display = 'none';
+        });
+        
+        // Make functions global so onclick attributes work
+        window.openPanel = openPanel;
+        window.closePanel = closePanel;
+        window.openTrophyModal = openTrophyModal;
+        window.closeTrophyModal = closeTrophyModal;
+        window.openPlayerModal = openPlayerModal;
+        window.closePlayerModal = closePlayerModal;
+        window.openManagerModal = openManagerModal;
+        window.closeManagerModal = closeManagerModal;
+        
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
